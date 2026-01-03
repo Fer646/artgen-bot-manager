@@ -47,8 +47,11 @@ export interface NewsItem {
   snippet: string;
 }
 
+// Заменяем process.env.API_KEY на специальный формат Vite
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
 export const getMarketAnalysis = async (stockPrice: number, change: number): Promise<AnalysisResponse> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: API_KEY });
   const prompt = `Provide a comprehensive market analysis for Artgen (ABIO). 
 Current Quote: ${stockPrice} RUB (${change}% change). 
 Include details on:
@@ -75,61 +78,4 @@ Include details on:
     console.error('Gemini error:', error);
     return {
       text: `Market analysis engine encountered an error. Current quote: ${stockPrice} RUB. Please review the latest documents on artgen.ru.`,
-      sources: []
-    };
-  }
-};
-
-export const fetchLatestNews = async (): Promise<NewsItem[]> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const prompt = `Find the latest news, press releases, and corporate announcements for Artgen (ABIO) from artgen.ru and financial news outlets. List the top 5 most recent items with titles and dates.`;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: prompt,
-      config: {
-        systemInstruction: "You are a news aggregator for Artgen (ABIO). Focus on accuracy and recent dates.",
-        tools: [{ googleSearch: {} }],
-      }
-    });
-
-    const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    const news: NewsItem[] = chunks
-      .filter(chunk => chunk.web)
-      .map(chunk => ({
-        title: chunk.web.title,
-        url: chunk.web.uri,
-        date: "Recent",
-        snippet: ""
-      }))
-      .slice(0, 5);
-
-    return news;
-  } catch (error) {
-    console.error('Error fetching news:', error);
-    return [];
-  }
-};
-
-export const getSearchGroundedInfo = async (query: string) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Search for the latest corporate news or financial reports from Artgen (ABIO) regarding: ${query}. Use artgen.ru as a primary source reference.`,
-      config: {
-        tools: [{ googleSearch: {} }],
-        systemInstruction: SYSTEM_INSTRUCTION,
-      },
-    });
-    
-    const text = response.text;
-    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    
-    return { text, sources };
-  } catch (error) {
-    console.error('Search grounding error:', error);
-    return { text: "Search currently unavailable. Please check artgen.ru directly.", sources: [] };
-  }
-};
+      sources:
