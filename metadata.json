@@ -1,0 +1,5 @@
+{
+  "name": "Artgen Stock Bot Dashboard",
+  "description": "A sophisticated management dashboard and simulator for the @medpharm_bot Telegram bot, featuring real-time MOEX data for Artgen (ABIO), advanced stock charts, and Gemini-powered market analysis.",
+  "requestFramePermissions": []
+}
