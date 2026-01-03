@@ -46,7 +46,7 @@ const ChatSimulator: React.FC = () => {
     try {
       if (command.includes('/price')) {
         const p = await fetchArtgenPrice();
-        botResponse = `📈 **ABIO (Artgen) Quote Update**\n\nPrice: ${p.price} RUB\nChange: ${p.changePercent}%\nVolume: ${p.volume.toLocaleString()}\n\nFull financial disclosure available at artgen.ru/investoram/`;
+        botResponse = `📈 **ABIO (Artgen) Quote Update**\n\nPrice: ${p.price} RUB\nChange: ${p.changePercent}%\nVolume: ${p.volume.toLocaleString()}\n\nFull financial disclosure available at artgen.ru/investors/raskrytie-informaczii/`;
       } else {
         const { text: aiText, sources } = await getSearchGroundedInfo(text);
         botResponse = aiText;
