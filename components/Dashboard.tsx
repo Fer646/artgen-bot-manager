@@ -3,13 +3,14 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Brush, ReferenceArea } from 'recharts';
 import { StockPrice, ChartDataPoint } from '../types';
 import { fetchArtgenPrice, fetchHistoryData, TimeRange } from '../services/moexService';
-import { getMarketAnalysis, AnalysisResponse } from '../services/geminiService';
+import { getMarketAnalysis, fetchLatestNews, AnalysisResponse, NewsItem } from '../services/geminiService';
 
 const Dashboard: React.FC = () => {
   const [price, setPrice] = useState<StockPrice | null>(null);
   const [history, setHistory] = useState<ChartDataPoint[]>([]);
   const [filteredData, setFilteredData] = useState<ChartDataPoint[]>([]);
   const [analysis, setAnalysis] = useState<AnalysisResponse>({ text: 'Synthesizing comprehensive biotech report...', sources: [] });
+  const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState<TimeRange>('1W');
 
@@ -21,11 +22,16 @@ const Dashboard: React.FC = () => {
   const loadData = useCallback(async (selectedRange: TimeRange) => {
     try {
       setLoading(true);
-      const p = await fetchArtgenPrice();
-      const h = await fetchHistoryData(selectedRange);
+      const [p, h, latestNews] = await Promise.all([
+        fetchArtgenPrice(),
+        fetchHistoryData(selectedRange),
+        fetchLatestNews()
+      ]);
+      
       setPrice(p);
       setHistory(h);
       setFilteredData(h);
+      setNews(latestNews);
       setIsZoomed(false);
       
       const aiResponse = await getMarketAnalysis(p.price, p.changePercent);
@@ -150,7 +156,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Interactive Chart Area */}
+        {/* Left Column: Chart & Analysis */}
         <div className="xl:col-span-2 space-y-6">
           <div className="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -278,8 +284,57 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Profile & Info Panel */}
+        {/* Right Column: News & Profile */}
         <div className="space-y-6">
+          {/* Latest News Section */}
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+            <h3 className="font-bold text-slate-900 mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <i className="fas fa-newspaper text-indigo-600"></i>
+                Latest News & Releases
+              </div>
+              <span className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase font-bold tracking-tighter">Live</span>
+            </h3>
+            
+            <div className="space-y-4">
+              {news.length > 0 ? (
+                news.map((item, idx) => (
+                  <a 
+                    key={idx} 
+                    href={item.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="group block p-3 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all"
+                  >
+                    <p className="text-[10px] font-bold text-indigo-600 uppercase mb-1">{item.date}</p>
+                    <h4 className="text-xs font-bold text-slate-800 line-clamp-2 leading-snug group-hover:text-indigo-700">
+                      {item.title}
+                    </h4>
+                    <div className="mt-2 flex items-center gap-1 text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                      <span>Read More</span>
+                      <i className="fas fa-chevron-right text-[8px] transform group-hover:translate-x-0.5 transition-transform"></i>
+                    </div>
+                  </a>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i className="fas fa-spinner fa-spin text-slate-300"></i>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-medium">Scanning media channels...</p>
+                </div>
+              )}
+            </div>
+            
+            <a 
+              href="https://artgen.ru/media-center/" 
+              target="_blank"
+              className="mt-4 block w-full text-center py-3 bg-slate-50 text-slate-500 text-[10px] font-bold rounded-xl hover:bg-slate-100 border border-slate-100 transition-all uppercase tracking-widest"
+            >
+              Go to Media Center
+            </a>
+          </div>
+
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
              <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                <i className="fas fa-info-circle text-indigo-600"></i>
@@ -305,15 +360,17 @@ const Dashboard: React.FC = () => {
              </ul>
              <div className="space-y-2">
                <a 
-                 href="https://artgen.ru/investoram/" 
+                 href="https://artgen.ru/investors/raskrytie-informaczii/" 
                  target="_blank" 
+                 rel="noopener noreferrer"
                  className="block w-full text-center bg-slate-900 text-white text-xs font-bold py-3 rounded-xl hover:bg-black transition-all"
                >
                  INVESTOR RELATIONS
                </a>
                <a 
-                 href="https://artgen.ru/novosti/" 
+                 href="https://artgen.ru/media-center/" 
                  target="_blank" 
+                 rel="noopener noreferrer"
                  className="block w-full text-center bg-white text-slate-900 border border-slate-200 text-xs font-bold py-3 rounded-xl hover:bg-slate-50 transition-all"
                >
                  LATEST PRESS RELEASES
