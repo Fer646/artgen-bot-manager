@@ -34,18 +34,20 @@ export default async function handler(req: any, res: any) {
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel(
-  { model: "gemini-1.5-flash" },
-  { apiVersion: 'v1' } // Добавляем этот объект вторым аргументом
+  { 
+    model: "gemini-1.5-flash",
+    systemInstruction: {
+      role: 'system',
+      parts: [{ text: `Ты — эксперт по компании Артген. Используй эти данные: ${JSON.stringify(ARTGEN_DATA_2025)}. Отвечай кратко и профессионально.` }]
+    }
+  },
+  { apiVersion: 'v1' }
 );
 
     // 🧠 Генерация контента с системной инструкцией
     const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: message }] }],
-      systemInstruction: {
-        role: 'system',
-        parts: [{ text: `Ты — эксперт по компании Артген. Используй эти данные: ${JSON.stringify(ARTGEN_DATA_2025)}. Отвечай кратко и профессионально.` }]
-      }
-    });
+  contents: [{ role: 'user', parts: [{ text: message }] }]
+});
 
     const response = await result.response;
     const text = response.text();
