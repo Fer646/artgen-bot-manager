@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage } from '../types';
 import { fetchArtgenPrice } from '../services/moexService';
-import { getSearchGroundedInfo } from '../services/geminiService';
 
 const ChatSimulator: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
