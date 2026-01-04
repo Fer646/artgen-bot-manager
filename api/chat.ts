@@ -14,9 +14,9 @@ export default async function handler(req: Request) {
     // Принудительно устанавливаем версию v1 в настройках SDK
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel(
-      { model: "gemini-1.5-flash" },
-      { apiVersion: 'v1' } // ЭТО КРИТИЧЕСКИ ВАЖНАЯ СТРОКА
-    );
+  { model: "gemini-1.5-pro" }, // Меняем flash на pro
+  { apiVersion: 'v1' }
+);
 
     const userPrompt = body.messages 
       ? body.messages[body.messages.length - 1].content 
