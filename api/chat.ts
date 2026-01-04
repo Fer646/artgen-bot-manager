@@ -17,9 +17,11 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ error: "API Key is missing on server" });
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash-latest",
+  const genAI = new GoogleGenerativeAI(process.env.VITE_GEMINI_API_KEY || "");
+// Попробуем явно указать модель без лишних суффиксов
+const model = genAI.getGenerativeModel({ 
+  model: "gemini-1.5-flash",
+
     systemInstruction: `Ты — эксперт по компании Артген. 
     Используй эти данные: ${JSON.stringify(ARTGEN_DATA_2025)}.
     Отвечай четко и по делу.`
