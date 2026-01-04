@@ -47,13 +47,24 @@ const ChatSimulator: React.FC = () => {
       if (command.includes('/price')) {
         const p = await fetchArtgenPrice();
         botResponse = `📈 **ABIO (Artgen) Quote Update**\n\nPrice: ${p.price} RUB\nChange: ${p.changePercent}%\nVolume: ${p.volume.toLocaleString()}\n\nFull financial disclosure available at artgen.ru/investors/raskrytie-informaczii/`;
-      } else {
-        const { text: aiText, sources } = await getSearchGroundedInfo(text);
-        botResponse = aiText;
-        if (sources.length > 0) {
-           botResponse += "\n\n📖 Reference: " + (sources[0].web?.uri || 'artgen.ru');
-        }
-      }
+ } else {
+  // Делаем запрос к нашей новой серверной функции
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message: text }),
+  });
+
+  const data = await response.json();
+
+  if (data.error) {
+    throw new Error(data.error);
+  }
+
+  botResponse = data.text;
+}
     } catch (err) {
       botResponse = "Connection to MOEX/Gemini interrupted. Please try again.";
     }
