@@ -1,75 +1,41 @@
-const ARTGEN_DETAILS = `
-ОТЧЕТНОСТЬ АРТГЕН (МСФО) за 9 месяцев 2025:
-- Выручка: 290.5 млн руб. (+15% к прошлому году)
-- Чистая прибыль: 12.1 млн руб.
-- EBITDA: 45.2 млн руб.
-- Долг/EBITDA: 1.2
-- Основные проекты: Разработка генно-терапевтических препаратов, сеть генетических центров.
-- Риски: Валютные колебания, регуляторные изменения.
-`;
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') return res.status(405).json({ error: "Method not allowed" });
+export const config = { runtime: 'edge' };
 
-  const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-  const message = req.body?.message || "Привет";
-  const modelName = "gemini-1.5-flash";
-
-  const payload = {
-    contents: [
-      {
-        role: "user",
-        parts: [{ 
-          text: `Ты — ведущий финансовый аналитик по биотехнологическому сектору. 
-          Твоя задача: анализировать данные компании "Артген" и отвечать на вопросы инвесторов.
-
-          ИНФОРМАЦИОННАЯ БАЗА:
-          ${ARTGEN_DETAILS}
-
-          ПРАВИЛА ОТВЕТА:
-          1. Используй только предоставленные цифры.
-          2. Если данных нет, честно скажи: "В текущем отчете эта информация отсутствует".
-          3. Пиши профессионально, но понятно. Ссылайся на динамику (рост/падение).
-          4. Форматируй важные цифры **жирным шрифтом**.
-
-          ПРИМЕР ДИАЛОГА ДЛЯ КОНТЕКСТА:
-          Пользователь: Какая выручка?
-          Модель: Выручка составила **290.5 млн руб.**
-          Пользователь: А прибыль?
-          Модель: Чистая прибыль составила **12.1 млн руб.**
-
-          ВОПРОС ПОЛЬЗОВАТЕЛЯ: 
-          ${message}` 
-        }]
-      }
-    ],
-    generationConfig: {
-      temperature: 0.2, 
-      topP: 0.8
-    }
-  };
+export default async function handler(req: Request) {
+  if (req.method !== 'POST') {
+    return new Response('Method Not Allowed', { status: 405 });
+  }
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Нет ответа от модели";
-      return res.status(200).json({ text: aiText });
-    } else {
-      console.error(`📍 Google Error:`, data.error?.message || data);
-      return res.status(response.status).json({ error: data.error?.message || "Ошибка API" });
+    const { messages } = await req.json();
+    const apiKey = process.env.GEMINI_API_KEY;
+    
+    if (!apiKey) {
+      console.error("❌ API Key is missing in environment variables");
+      return new Response(JSON.stringify({ error: "API Key missing" }), { status: 500 });
     }
 
-  } catch (err: any) {
-    console.error("📍 Ошибка выполнения:", err.message);
-    return res.status(500).json({ error: "Внутренняя ошибка сервера", detail: err.message });
+    // Инициализация Google AI SDK
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    // Получаем последнее сообщение от пользователя
+    const userPrompt = messages[messages.length - 1].content;
+
+    // Генерируем ответ
+    const result = await model.generateContent(userPrompt);
+    const response = await result.response;
+    const text = response.text();
+
+    return new Response(JSON.stringify({ content: text }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error: any) {
+    console.error("📍 Google SDK Error:", error.message);
+    return new Response(JSON.stringify({ 
+      error: "Google SDK Error", 
+      details: error.message 
+    }), { status: 500 });
   }
 }
