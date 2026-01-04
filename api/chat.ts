@@ -16,7 +16,8 @@ export default async function handler(req: Request) {
     if (!userPrompt) return new Response(JSON.stringify({ error: "No message found" }), { status: 400 });
 
     // ВНИМАНИЕ: Используем стабильную версию /v1/ вместо /v1beta/
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Используем новую, облегченную модель и возвращаемся к v1beta
+   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: 'POST',
