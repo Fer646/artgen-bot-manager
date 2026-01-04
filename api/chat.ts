@@ -34,7 +34,7 @@ export default async function handler(req: any, res: any) {
     
     // Выбираем модель
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash", 
+      model: "gemini-1.5-flash-latest", 
     });
 
     // 🧠 Генерация контента с системной инструкцией
