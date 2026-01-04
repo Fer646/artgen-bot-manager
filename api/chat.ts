@@ -34,7 +34,7 @@ export default async function handler(req: any, res: any) {
     
     // Выбираем модель
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.0-flash", 
+      model: "gemini-1.5-flash", 
     });
 
     // 🧠 Генерация контента с системной инструкцией
@@ -53,12 +53,14 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ text });
 
   } catch (error: any) {
-    // 📝 Логирование ошибки для Vercel Dashboard
-    console.error("Gemini API Error:", error.message || error);
-    
-    return res.status(500).json({ 
-      error: "AI Service Error",
-      details: error.message 
+  console.error("Gemini API Error:", error);
+  
+  // Проверяем, не лимит ли это
+  if (error.message?.includes('429') || error.status === 429) {
+    return res.status(429).json({ 
+      error: "Слишком много запросов. Пожалуйста, подождите 1 минуту и попробуйте снова." 
     });
   }
+
+  return res.status(500).json({ error: "Ошибка ИИ: " + error.message });
 }

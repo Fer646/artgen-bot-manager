@@ -8,7 +8,7 @@ export default defineConfig(({ mode }): UserConfig => {
   const tunnelHost = 'gpqqzplk-5173.euw.devtunnels.ms';
 
   return {
-    plugins: [react()],
+    plugins: [react() as any],
     server: {
       port: 5173,
       host: true, // Использование true вместо '0.0.0.0' часто помогает с типами
